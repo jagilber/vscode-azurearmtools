@@ -7,26 +7,33 @@ import { mayBeMatchingParamFile } from "../extension.bundle";
 
 suite("ParameterFiles", () => {
     suite("mayBeMatchingParamFile", () => {
-        function isLikely(expected: boolean, templateFileName: string, possibleParamFileName: string): void {
+        function testIsLikelyMatch(expected: boolean, templateFileName: string, possibleParamFileName: string): void {
             test(`(${templateFileName}, ${possibleParamFileName})`, () => {
                 const result = mayBeMatchingParamFile(templateFileName, possibleParamFileName);
                 assert.equal(result, expected);
             });
         }
 
-        isLikely(true, "template.json", "template.params.json");
-        isLikely(true, "template.json", "template.parameters.json");
+        testIsLikelyMatch(true, "template.json", "template.params.json");
+        testIsLikelyMatch(true, "template.json", "template.parameters.json");
 
-        isLikely(true, "template.json", "template.params.dev.json");
-        isLikely(true, "template.json", "template.parameters.dev.json");
+        testIsLikelyMatch(true, "template.json", "template.params.dev.json");
+        testIsLikelyMatch(true, "template.json", "template.parameters.dev.json");
 
-        isLikely(true, "template.json", "template.params.dev.whatever.json");
-        isLikely(true, "template.json", "template.parameters.dev.json");
+        testIsLikelyMatch(true, "template.json", "template.params.dev.whatever.json");
+        testIsLikelyMatch(true, "template.json", "template.parameters.dev.json");
 
-        isLikely(true, "TEMPlate.json", "template.params.dev.whatever.JSON");
-        isLikely(true, "template.JSON", "Template.PARAMETERS.deV.Json");
+        testIsLikelyMatch(true, "TEMPlate.json", "template.params.dev.whatever.JSON");
+        testIsLikelyMatch(true, "template.JSON", "Template.PARAMETERS.deV.Json");
 
-        isLikely(true, "TEMPlate.json", "template.params.dev.whatever.JSONc");
-        isLikely(true, "template.JSON", "Template.PARAMETERS.deV.JsonC");
+        testIsLikelyMatch(true, "TEMPlate.json", "template.params.dev.whatever.JSONc");
+        testIsLikelyMatch(true, "template.JSON", "Template.PARAMETERS.deV.JsonC");
+
+        testIsLikelyMatch(true, "new-vm.template.json", "new-vm.params.json");
+        testIsLikelyMatch(true, "new-vm.template.json", "new-vm.parameters.json");
+
+        testIsLikelyMatch(false, "new-vm2.template.json", "new-vm.params.json");
+
+        testIsLikelyMatch(true, "new-vm.template.json", "new-vm-parameters.json");
     });
 });

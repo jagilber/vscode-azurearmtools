@@ -271,7 +271,7 @@ export function mayBeMatchingParamFile(templateFileName: string, paramFileName: 
 }
 
 function removeAllExtensions(fileName: string): string {
-  return fileName.replace(/\.[^.]+$/, '');
+  return fileName.replace(/\..+$/, '');
 }
 
 /**
