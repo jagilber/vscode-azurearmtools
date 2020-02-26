@@ -387,8 +387,10 @@ async function neverAskAgain(templateUri: Uri, actionContext: IActionContext): P
  */
 export function findMappedParamFileForTemplate(templateFileUri: Uri): Uri | undefined {
   const paramFiles: { [key: string]: string } | undefined =
-    workspace.getConfiguration(configPrefix).get<{ [key: string]: string }>(configKeys.parameterFiles);
-  if (typeof paramFiles === "object") {
+    workspace.getConfiguration(configPrefix).get<{ [key: string]: string }>(configKeys.parameterFiles)
+    // tslint:disable-next-line: strict-boolean-expressions
+    || {};
+  if (typeof paramFiles === 'object') {
     const normalizedTemplatePath = normalizePath(templateFileUri.fsPath);
     let paramFile: Uri | undefined;
     for (let fileNameKey of Object.getOwnPropertyNames(paramFiles)) {
