@@ -315,12 +315,17 @@ export function considerQueryingForParameterFile(document: TextDocument): void {
     const another: MessageItem = { title: "Choose File..." };
 
     //asdf ask when no template file
-    const response = await ext.ui.showWarningMessage(
-      `A parameter file "${closestMatch.friendlyPath}" has been detected. Do you want to associate it with template file "${path.basename(templatPath)}"? Having a parameter file association enables additional functionality, such as deeper validation.`,
+    const response: MessageItem | undefined = await window.showInformationMessage(
+      `A parameter file "${closestMatch.friendlyPath}" has been detected. Do you want to associate it with template file "${path.basename(templatPath)}"? Having a parameter file association enables additional functionality, such as more complete validation.`,
       yes,
       no,
       another
     );
+    if (!response) {
+      actionContext.telemetry.properties.response = 'Canceled';
+      throw new UserCancelledError();
+    }
+
     actionContext.telemetry.properties.response = response.title;
 
     switch (response.title) {
@@ -422,7 +427,9 @@ async function setMappedParamFileForTemplate(templateUri: Uri, paramFileUri: Uri
   const normalizedTemplatePath = normalizePath(templateUri.fsPath);
 
   // We only want the values in the user settings
-  const map = workspace.getConfiguration(configPrefix).inspect<{ [key: string]: string | undefined }>(configKeys.parameterFiles)?.globalValue;
+  const map = workspace.getConfiguration(configPrefix).inspect<{ [key: string]: string | undefined }>(configKeys.parameterFiles)?.globalValue
+    // tslint:disable-next-line: strict-boolean-expressions
+    || {};
 
   if (typeof map !== 'object') {
     return;
