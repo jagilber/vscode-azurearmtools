@@ -15,7 +15,7 @@ import { containsParamsSchema } from './schemas';
 
 const readAtMostBytesToFindParamsSchema = 4 * 1024;
 const currentMessage = "Current";
-const similarFilenameMessage = "Filename matches";
+const similarFilenameMessage = "Similar filename";
 const howToMessage = `You can manually associate a parameter file with this template at any time by clicking "Select Parameter File..." in the status bar or the editor context menu.`;
 
 const _filesToIgnoreThisSession: Set<string> = new Set<string>();
@@ -31,7 +31,6 @@ export async function selectParameterFile(actionContext: IActionContext, sourceU
   if (!sourceUri) {
     sourceUri = window.activeTextEditor?.document.uri;
   }
-
   if (!sourceUri) {
     await ext.ui.showWarningMessage(`No Azure Resource Manager template file is being edited.`);
     return;
@@ -42,7 +41,7 @@ export async function selectParameterFile(actionContext: IActionContext, sourceU
   // Verify it's a template file asdf
   const contents = (await fse.readFile(templateUri.fsPath, { encoding: "utf8" })).toString();
   const template: DeploymentTemplate = new DeploymentTemplate(contents, "Check file is template");
-  if (!template.hasArmSchemaUri()) {
+  if (!template.hasArmSchemaUri()) { //asdf testpoint
     throw new Error(`"${templateUri.fsPath}" does not appear to be an Azure Resource Manager deployment template file.`);
   }
 
@@ -75,7 +74,14 @@ export async function selectParameterFile(actionContext: IActionContext, sourceU
     return (aData?.uri.fsPath || "").localeCompare(bData?.uri.fsPath || "");
   });
 
-  // Add None at top, Browse at bottom
+  // Move the current item (if any) to the top
+  const currentItem = pickItems.find(pi => pi.data === currentParamFile);
+  if (currentItem) {
+    // tslint:disable-next-line: no-any
+    pickItems = [currentItem].concat(pickItems.filter(ppf => ppf !== currentItem));
+  }
+
+  // Add None at top, Browse/Open Current at bottom
   const none: IAzureQuickPickItem<IPossibleParamFile | undefined> = {
     label: "$(circle-slash) None",
     description: !!currentParamUri ? undefined : currentMessage,
@@ -85,14 +91,11 @@ export async function selectParameterFile(actionContext: IActionContext, sourceU
     label: '$(file-directory) Browse...',
     data: undefined
   };
-  pickItems = [none].concat(pickItems).concat([browse]);
-
-  //asdf
-  // // Move the current item (if any) to the very top
-  // const currentItem = pickItems.find(pi => pi.data === currentParamFile);
-  // if (currentItem) {
-  //   pickItems = [currentItem].concat(pickItems.filter(ppf => ppf !== currentItem));
-  // }
+  const openCurrent: IAzureQuickPickItem<IPossibleParamFile | undefined> = {
+    label: '$(open-preview) Open Current',
+    data: undefined
+  };
+  pickItems = [none].concat(pickItems).concat([browse, openCurrent]);
 
   // Show the quick pick
   const result: IAzureQuickPickItem<IPossibleParamFile | undefined> = await ext.ui.showQuickPick(
@@ -139,6 +142,10 @@ export async function selectParameterFile(actionContext: IActionContext, sourceU
 
     // Map to the browsed file
     await setMappedParamFileForTemplate(templateUri, selectedParamsPath);
+  } else if (result === openCurrent) {
+    // Open current
+
+    await commands.executeCommand('azurerm-vscode-tools.openParameterFile', templateUri);
   } else if (result.data === currentParamFile) {
     // Current re-selected
 
@@ -180,12 +187,13 @@ export function getFriendlyPathToParamFile(templateUri: Uri, paramFileUri: Uri):
 }
 
 function createQuickPickItem(paramFile: IPossibleParamFile, current: IPossibleParamFile | undefined, templateUri: Uri): IAzureQuickPickItem<IPossibleParamFile> {
+  const isCurrent: boolean = paramFile === current;
   return {
-    label: `$(json) ${paramFile.friendlyPath}`,
+    label: `${isCurrent ? '$(check) ' : '$(json) '} ${paramFile.friendlyPath}`,
     data: paramFile,
-    description: paramFile === current ? currentMessage :
-      paramFile.isCloseNameMatch ? similarFilenameMessage :
-        undefined
+    description: isCurrent ? currentMessage
+      : paramFile.isCloseNameMatch ? similarFilenameMessage
+        : undefined
   };
 }
 
