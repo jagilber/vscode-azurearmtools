@@ -6,7 +6,7 @@
 import * as assert from 'assert';
 import * as fse from 'fs-extra';
 import * as path from 'path';
-import { commands, ConfigurationTarget, MessageItem, TextDocument, Uri, window, workspace } from 'vscode';
+import { commands, ConfigurationTarget, MessageItem, TextDocument, Uri, ViewColumn, window, workspace } from 'vscode';
 import { callWithTelemetryAndErrorHandling, DialogResponses, IActionContext, IAzureQuickPickItem, UserCancelledError } from 'vscode-azureextensionui';
 import { configKeys, configPrefix, globalStateKeys, isWin32 } from './constants';
 import { DeploymentTemplate } from './DeploymentTemplate';
@@ -150,6 +150,19 @@ export async function selectParameterFile(actionContext: IActionContext, sourceU
     assert(result.data, "Quick pick item should have had data");
     await neverAskAgain(templateUri, actionContext);
     await setMappedParamFileForTemplate(templateUri, result.data?.uri);
+  }
+}
+
+export async function openParameterFile(actionContext: IActionContext, sourceUri: Uri | undefined): Promise<void> {
+  if (sourceUri) {
+
+    let paramFile: Uri | undefined = findMappedParamFileForTemplate(sourceUri);
+    if (!paramFile) {
+      throw new Error(`There is no parameter file currently associated with template file "${sourceUri.fsPath}"`);
+    }
+
+    let doc: TextDocument = await workspace.openTextDocument(paramFile);
+    await window.showTextDocument(doc, ViewColumn.Beside);
   }
 }
 

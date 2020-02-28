@@ -46,6 +46,7 @@
         "onCommand:azurerm-vscode-tools.uninstallDotnet",
         "onCommand:azurerm-vscode-tools.reloadSchemas",
         "onCommand:azurerm-vscode-tools.selectParameterFile",
+        "onCommand:azurerm-vscode-tools.openParameterFile",
         "onCommand:azurerm-vscode-tools.resetGlobalState"
     ],
     "contributes": {
@@ -167,6 +168,13 @@
             },
             {
                 "category": "Azure Resource Manager Tools",
+                "title": "Open Associated Parameter File",
+                "command": "azurerm-vscode-tools.openParameterFile",
+                "enablement": "editorLangId==arm-template",
+                "$asdf": "disable if none"
+            },
+            {
+                "category": "Azure Resource Manager Tools",
                 "title": "Reset Global State",
                 "command": "azurerm-vscode-tools.resetGlobalState"
             }
@@ -175,23 +183,42 @@
             "editor/context": [
                 {
                     "command": "azurerm-vscode-tools.reloadSchemas",
-                    "group": "arm-template"
+                    "group": "arm-template@1",
+                    "when": "editorLangId==arm-template"
                 },
                 {
                     "command": "azurerm-vscode-tools.selectParameterFile",
-                    "group": "arm-template"
+                    "group": "arm-template@2",
+                    "when": "editorLangId==arm-template"
+                },
+                {
+                    "command": "azurerm-vscode-tools.openParameterFile",
+                    "group": "arm-template@3",
+                    "when": "editorLangId==arm-template"
                 }
             ],
             "editor/title": [
                 {
                     "command": "azurerm-vscode-tools.selectParameterFile",
-                    "group": "arm-template"
+                    "group": "arm-template@2",
+                    "when": "editorLangId==arm-template"
+                },
+                {
+                    "command": "azurerm-vscode-tools.openParameterFile",
+                    "group": "arm-template@3",
+                    "when": "editorLangId==arm-template"
                 }
             ],
             "editor/title/context": [
                 {
                     "command": "azurerm-vscode-tools.selectParameterFile",
-                    "group": "arm-template"
+                    "group": "arm-template@2",
+                    "when": "editorLangId==arm-template"
+                },
+                {
+                    "command": "azurerm-vscode-tools.openParameterFile",
+                    "group": "arm-template@3",
+                    "when": "editorLangId==arm-template"
                 }
             ]
         }

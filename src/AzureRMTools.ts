@@ -23,7 +23,7 @@ import * as Json from "./JSON";
 import * as language from "./Language";
 import { reloadSchemas } from "./languageclient/reloadSchemas";
 import { startArmLanguageServer, stopArmLanguageServer } from "./languageclient/startArmLanguageServer";
-import { considerQueryingForParameterFile, findMappedParamFileForTemplate, getFriendlyPathToParamFile, selectParameterFile } from "./parameterFiles";
+import { considerQueryingForParameterFile, findMappedParamFileForTemplate, getFriendlyPathToParamFile, openParameterFile, selectParameterFile } from "./parameterFiles";
 import { IReferenceSite, PositionContext } from "./PositionContext";
 import { ReferenceList } from "./ReferenceList";
 import { resetGlobalState } from "./resetGlobalState";
@@ -97,6 +97,7 @@ export class AzureRMTools {
             await reloadSchemas();
         });
         registerCommand("azurerm-vscode-tools.selectParameterFile", selectParameterFile);
+        registerCommand("azurerm-vscode-tools.openParameterFile", openParameterFile);
         registerCommand("azurerm-vscode-tools.resetGlobalState", resetGlobalState);
 
         this._paramsStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
