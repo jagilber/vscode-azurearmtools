@@ -74,9 +74,9 @@ async function getLangServerVersion(): Promise<string | undefined> {
     });
 }
 
-// tslint:disable-next-line: max-func-body-length asdf
 export async function startLanguageClient(serverDllPath: string, dotnetExePath: string): Promise<void> {
-    // tslint:disable-next-line: max-func-body-length asdf
+    // tslint:disable-next-line: no-suspicious-comment
+    // tslint:disable-next-line: max-func-body-length // TODO: Refactor function
     await callWithTelemetryAndErrorHandling('startArmLanguageClient', async (actionContext: IActionContext) => {
         actionContext.errorHandling.rethrow = true;
 
@@ -126,6 +126,7 @@ export async function startLanguageClient(serverDllPath: string, dotnetExePath: 
                 workspace: {
                     configuration: (params: ConfigurationParams, token: CancellationToken, next: ConfigurationRequest.HandlerSignature): unknown[] => {
                         let result: unknown[] = <unknown[]>next(params, token);
+                        // tslint:disable-next-line: no-unnecessary-type-assertion
                         let settings: Settings = <Settings>(<unknown[]>result)[0];
                         let scopeUri = "";
 

@@ -123,7 +123,7 @@
                 },
                 "azureResourceManagerTools.parameterFiles": {
                     "type": "object",
-                    "description": "asdf todo",
+                    "description": "Specifies which parameter file to use for validating with given template file. Specifying the parameters allows more thorough validation.",
                     "default": {},
                     "additionalProperties": {
                         "type": "string"
@@ -170,8 +170,7 @@
                 "category": "Azure Resource Manager Tools",
                 "title": "Open Associated Parameter File",
                 "command": "azurerm-vscode-tools.openParameterFile",
-                "enablement": "editorLangId==arm-template",
-                "$asdf": "disable if none"
+                "enablement": "editorLangId==arm-template"
             },
             {
                 "category": "Azure Resource Manager Tools",

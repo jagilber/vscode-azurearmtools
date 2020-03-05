@@ -271,7 +271,8 @@ export class AzureRMTools {
                 multilineStringCount: deploymentTemplate.getMultilineStringCount(),
                 commentCount: deploymentTemplate.getCommentCount(),
                 extErrorsCount: errors.length,
-                extWarnCount: warnings.length
+                extWarnCount: warnings.length,
+                linkedParameterFiles: findMappedParamFileForTemplate(document.uri) ? 1 : 0
             });
 
         this.logFunctionCounts(deploymentTemplate);
@@ -483,7 +484,7 @@ export class AzureRMTools {
         if (activeDocument) {
             const deploymentTemplate = this.getDeploymentTemplate(activeDocument);
             if (deploymentTemplate) {
-                const paramFileUri = findMappedParamFileForTemplate(activeDocument.uri); // asdf can this throw e.g. invalid path?
+                const paramFileUri = findMappedParamFileForTemplate(activeDocument.uri);
                 if (paramFileUri) {
                     const doesParamFileExist = await fse.pathExists(paramFileUri?.fsPath);
                     let text = `Parameters: ${getFriendlyPathToParamFile(activeDocument.uri, paramFileUri)}`;
@@ -537,7 +538,7 @@ export class AzureRMTools {
                     unrecognized.add(issue.functionName);
                 } else if (issue instanceof IncorrectArgumentsCountIssue) {
                     // Encode function name as "funcname(<actual-args>)[<min-expected>..<max-expected>]"
-                    let encodedName = `${issue.functionName}(${issue.actual})[${issue.minExpected}..${issue.maxExpected}]`; //asdf what if maxExpected is undefined?
+                    let encodedName = `${issue.functionName}(${issue.actual})[${issue.minExpected}..${issue.maxExpected}]`;
                     incorrectArgCounts.add(encodedName);
                 }
             }

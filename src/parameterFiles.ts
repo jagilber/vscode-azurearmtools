@@ -1,7 +1,6 @@
 // ----------------------------------------------------------------------------
 // Copyright (c) Microsoft Corporation.  All rights reserved.
 // ----------------------------------------------------------------------------
-// asdf telemetry?
 
 import * as assert from 'assert';
 import * as fse from 'fs-extra';
@@ -26,7 +25,7 @@ interface IPossibleParamFile {
   isCloseNameMatch: boolean;
 }
 
-// tslint:disable-next-line: max-func-body-length asdf
+// tslint:disable-next-line: max-func-body-length
 export async function selectParameterFile(actionContext: IActionContext, sourceUri: Uri | undefined): Promise<void> {
   if (!sourceUri) {
     sourceUri = window.activeTextEditor?.document.uri;
@@ -38,68 +37,17 @@ export async function selectParameterFile(actionContext: IActionContext, sourceU
 
   let templateUri: Uri = sourceUri;
 
-  // Verify it's a template file asdf
+  // Verify it's a template file
   const contents = (await fse.readFile(templateUri.fsPath, { encoding: "utf8" })).toString();
   const template: DeploymentTemplate = new DeploymentTemplate(contents, "Check file is template");
-  if (!template.hasArmSchemaUri()) { //asdf testpoint
+  if (!template.hasArmSchemaUri()) {
     throw new Error(`"${templateUri.fsPath}" does not appear to be an Azure Resource Manager deployment template file.`);
   }
 
-  // Find likely parameter file matches
-  let suggestions: IPossibleParamFile[] = await findSuggestedParameterFiles(templateUri);
-
-  // Find the current in that list
-  const currentParamUri: Uri | undefined = findMappedParamFileForTemplate(templateUri);
-  const currentParamPathNormalized: string | undefined = currentParamUri ? normalizePath(currentParamUri) : undefined;
-  let currentParamFile: IPossibleParamFile | undefined = suggestions.find(pf => normalizePath(pf.uri) === currentParamPathNormalized);
-  if (currentParamUri && !currentParamFile) {
-    // There is a current parameter file, but it wasn't among the list we came up with.  We must add it to the list.
-    currentParamFile = { isCloseNameMatch: false, uri: currentParamUri, friendlyPath: getFriendlyPathToParamFile(templateUri, currentParamUri) };
-    suggestions = suggestions.concat(currentParamFile);
-  }
-
-  // Create initial pick list and sort it
-  let pickItems: IAzureQuickPickItem<IPossibleParamFile | undefined>[] = suggestions.map(paramFile => createQuickPickItem(paramFile, currentParamFile, templateUri));
-  pickItems.sort((a, b) => {
-    const aData = a?.data;
-    const bData = a?.data;
-
-    // Close name matches go first
-    if (a?.data?.isCloseNameMatch !== b?.data?.isCloseNameMatch) {
-      return a?.data?.isCloseNameMatch ? -1 : 1;
-    }
-
-    // Otherwise compare filenames
-    // tslint:disable-next-line: strict-boolean-expressions
-    return (aData?.uri.fsPath || "").localeCompare(bData?.uri.fsPath || "");
-  });
-
-  // Move the current item (if any) to the top
-  const currentItem = pickItems.find(pi => pi.data === currentParamFile);
-  if (currentItem) {
-    // tslint:disable-next-line: no-any
-    pickItems = [currentItem].concat(pickItems.filter(ppf => ppf !== currentItem));
-  }
-
-  // Add None at top, Browse/Open Current at bottom
-  const none: IAzureQuickPickItem<IPossibleParamFile | undefined> = {
-    label: "$(circle-slash) None",
-    description: !!currentParamUri ? undefined : currentMessage,
-    data: undefined
-  };
-  const browse: IAzureQuickPickItem<IPossibleParamFile | undefined> = {
-    label: '$(file-directory) Browse...',
-    data: undefined
-  };
-  const openCurrent: IAzureQuickPickItem<IPossibleParamFile | undefined> = {
-    label: '$(open-preview) Open Current',
-    data: undefined
-  };
-  pickItems = [none].concat(pickItems).concat([browse, openCurrent]);
-
+  let quickPickList: QuickPickList = await createParamFileQuickPickList(templateUri);
   // Show the quick pick
   const result: IAzureQuickPickItem<IPossibleParamFile | undefined> = await ext.ui.showQuickPick(
-    pickItems,
+    quickPickList.items,
     {
       canPickMany: false,
       placeHolder: `Select a parameter file to associate with "${path.basename(templateUri.fsPath)}"`,
@@ -107,13 +55,13 @@ export async function selectParameterFile(actionContext: IActionContext, sourceU
     });
 
   // Interpret result
-  if (result === none) {
+  if (result === quickPickList.none) {
     // None
 
     // Remove the mapping for this file
     await neverAskAgain(templateUri, actionContext);
     await setMappedParamFileForTemplate(templateUri, undefined);
-  } else if (result === browse) {
+  } else if (result === quickPickList.browse) {
     // Browse...
 
     const paramsPaths: Uri[] | undefined = await window.showOpenDialog({
@@ -142,11 +90,11 @@ export async function selectParameterFile(actionContext: IActionContext, sourceU
 
     // Map to the browsed file
     await setMappedParamFileForTemplate(templateUri, selectedParamsPath);
-  } else if (result === openCurrent) {
+  } else if (result === quickPickList.openCurrent) {
     // Open current
 
     await commands.executeCommand('azurerm-vscode-tools.openParameterFile', templateUri);
-  } else if (result.data === currentParamFile) {
+  } else if (result.data === quickPickList.currentParamFile) {
     // Current re-selected
 
     // Nothing to change
@@ -184,6 +132,84 @@ export function getFriendlyPathToParamFile(templateUri: Uri, paramFileUri: Uri):
   } else {
     return paramFileUri.fsPath;
   }
+}
+
+interface QuickPickList {
+  items: IAzureQuickPickItem<IPossibleParamFile | undefined>[];
+  currentParamFile: IPossibleParamFile | undefined;
+  none: IAzureQuickPickItem<IPossibleParamFile | undefined>;
+  browse: IAzureQuickPickItem<IPossibleParamFile | undefined>;
+  openCurrent: IAzureQuickPickItem<IPossibleParamFile | undefined>;
+}
+
+async function createParamFileQuickPickList(templateUri: Uri): Promise<QuickPickList> {
+  // Find likely parameter file matches
+  let suggestions: IPossibleParamFile[] = await findSuggestedParameterFiles(templateUri);
+
+  // Find the current in that list
+  const currentParamUri: Uri | undefined = findMappedParamFileForTemplate(templateUri);
+  const currentParamPathNormalized: string | undefined = currentParamUri ? normalizePath(currentParamUri) : undefined;
+  let currentParamFile: IPossibleParamFile | undefined = suggestions.find(pf => normalizePath(pf.uri) === currentParamPathNormalized);
+  if (currentParamUri && !currentParamFile) {
+    // There is a current parameter file, but it wasn't among the list we came up with.  We must add it to the list.
+    currentParamFile = { isCloseNameMatch: false, uri: currentParamUri, friendlyPath: getFriendlyPathToParamFile(templateUri, currentParamUri) };
+    suggestions = suggestions.concat(currentParamFile);
+  }
+
+  // Create initial pick list and sort it
+  let pickItems: IAzureQuickPickItem<IPossibleParamFile | undefined>[] = suggestions.map(paramFile => createQuickPickItem(paramFile, currentParamFile, templateUri));
+  sortQuickPickList(pickItems);
+
+  // Move the current item (if any) to the top
+  const currentItem = pickItems.find(pi => pi.data === currentParamFile);
+  if (currentItem) {
+    // tslint:disable-next-line: no-any
+    pickItems = [currentItem].concat(pickItems.filter(ppf => ppf !== currentItem));
+  }
+
+  // Add None at top, Browse/Open Current at bottom
+  const none: IAzureQuickPickItem<IPossibleParamFile | undefined> = {
+    label: "$(circle-slash) None",
+    description: !!currentParamUri ? undefined : currentMessage,
+    data: undefined
+  };
+  const browse: IAzureQuickPickItem<IPossibleParamFile | undefined> = {
+    label: '$(file-directory) Browse...',
+    data: undefined
+  };
+  const openCurrent: IAzureQuickPickItem<IPossibleParamFile | undefined> = {
+    label: '$(split-horizontal) Open Current',
+    data: undefined
+  };
+  pickItems = [none].concat(pickItems).concat([browse]);
+
+  if (currentItem) {
+    pickItems = pickItems.concat([openCurrent]);
+  }
+
+  return {
+    items: pickItems,
+    currentParamFile,
+    none,
+    browse,
+    openCurrent
+  };
+}
+
+function sortQuickPickList(pickItems: IAzureQuickPickItem<IPossibleParamFile | undefined>[]): void {
+  pickItems.sort((a, b) => {
+    const aData = a?.data;
+    const bData = a?.data;
+
+    // Close name matches go first
+    if (a?.data?.isCloseNameMatch !== b?.data?.isCloseNameMatch) {
+      return a?.data?.isCloseNameMatch ? -1 : 1;
+    }
+
+    // Otherwise compare filenames
+    // tslint:disable-next-line: strict-boolean-expressions
+    return (aData?.uri.fsPath || "").localeCompare(bData?.uri.fsPath || "");
+  });
 }
 
 function createQuickPickItem(paramFile: IPossibleParamFile, current: IPossibleParamFile | undefined, templateUri: Uri): IAzureQuickPickItem<IPossibleParamFile> {
@@ -335,7 +361,6 @@ export function considerQueryingForParameterFile(document: TextDocument): void {
     const no: MessageItem = { title: "No" };
     const another: MessageItem = { title: "Choose File..." };
 
-    //asdf ask when no template file
     const response: MessageItem | undefined = await window.showInformationMessage(
       `A parameter file "${closestMatch.friendlyPath}" has been detected. Do you want to associate it with template file "${path.basename(templatPath)}"? Having a parameter file association enables additional functionality, such as more complete validation.`,
       yes,
@@ -363,7 +388,6 @@ export function considerQueryingForParameterFile(document: TextDocument): void {
         break;
       case another.title:
         await commands.executeCommand("azurerm-vscode-tools.selectParameterFile", templateUri);
-        // asdf what if they cancel?  Do we tell them how?  ask again?
         break;
       default:
         assert("considerQueryingForParameterFile: Unexpected response");
@@ -430,14 +454,12 @@ export function findMappedParamFileForTemplate(templateFileUri: Uri): Uri | unde
           //   with workspace settings overriding the user settings.
           // If there are two entries differing only by case, allow the last one to win, because it will be
           //   the workspace setting value
-          paramFile = !!resolvedPath ? Uri.file(resolvedPath) : undefined; // asdf what if invalid uri?
+          paramFile = !!resolvedPath ? Uri.file(resolvedPath) : undefined;
         }
       }
     }
 
     return paramFile;
-
-    // asdf urls?
   }
 
   return undefined;
@@ -469,14 +491,7 @@ async function setMappedParamFileForTemplate(templateUri: Uri, paramFileUri: Uri
   if (paramFileUri) {
     newMap[templateUri.fsPath] = relativeParamFilePath;
   }
-  /* asdf
-       * Will throw error when
-     * - Writing a configuration which is not registered.
-     * - Writing a configuration to workspace or folder target when no workspace is opened
-     * - Writing a configuration to folder target when there is no folder settings
-     * - Writing to folder target without passing a resource when getting the configuration (`workspace.getConfiguration(section, resource)`)
-     * - Writing a window configuration to folder target
-*/
+
   await workspace.getConfiguration(configPrefix).update(configKeys.parameterFiles, newMap, ConfigurationTarget.Global);
 }
 
