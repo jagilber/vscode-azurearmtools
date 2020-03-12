@@ -181,13 +181,6 @@ async function createParameterFileQuickPickList(templateUri: Uri): Promise<IQuic
   let pickItems: IAzureQuickPickItem<IPossibleParameterFile | undefined>[] = suggestions.map(paramFile => createQuickPickItem(paramFile, currentParamFile, templateUri));
   sortQuickPickList(pickItems);
 
-  // Move the current item (if any) to the top
-  const currentItem = pickItems.find(pi => pi.data === currentParamFile);
-  if (currentItem) {
-    // tslint:disable-next-line: no-any
-    pickItems = [currentItem].concat(pickItems.filter(ppf => ppf !== currentItem));
-  }
-
   // Add None at top, New/Browse/Open Current at bottom
   const none: IAzureQuickPickItem<IPossibleParameterFile | undefined> = {
     label: "$(circle-slash) None",
@@ -208,6 +201,14 @@ async function createParameterFileQuickPickList(templateUri: Uri): Promise<IQuic
   };
   pickItems = [none].concat(pickItems).concat([newFile, browse]);
 
+  // Move the current item (if any) to the top
+  const currentItem = pickItems.find(pi => pi.data === currentParamFile);
+  if (currentItem) {
+    // tslint:disable-next-line: no-any
+    pickItems = [currentItem].concat(pickItems.filter(ppf => ppf !== currentItem));
+  }
+
+  // Add "open" if there's a current
   if (currentItem) {
     pickItems = pickItems.concat([openCurrent]);
   }

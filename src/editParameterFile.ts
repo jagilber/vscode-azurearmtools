@@ -5,8 +5,9 @@
 import * as fse from 'fs-extra';
 import * as os from 'os';
 import * as path from 'path';
-import { QuickPickItem, Uri, window } from "vscode";
+import { QuickPickItem, TextEditor, Uri, window } from "vscode";
 import { IActionContext, UserCancelledError } from 'vscode-azureextensionui';
+import { Json } from '../extension.bundle';
 import { CaseInsensitiveMap } from './CaseInsensitiveMap';
 import { DeploymentTemplate } from "./DeploymentTemplate";
 import { ExpressionType } from './ExpressionType';
@@ -111,6 +112,15 @@ export function createParameterProperty(template: DeploymentTemplate, parameter:
     return `"${parameter.nameValue.unquotedValue}": {` + os.EOL
         + `${makeIndent(indent)}"value": ${valueIndentedAfterFirstLine}` + os.EOL
         + `}`;
+}
+
+export async function addParameterToParameterFile(editor: TextEditor, template: DeploymentTemplate, parameter: IParameterDefinition): Promise<void> {
+    const parameterText: string = createParameterProperty(template, parameter, defaultIndent);
+    appendPropertyTextIntoObject(editor, parameterText);
+}
+
+function appendPropertyTextIntoObject(editor: TextEditor, text: string, jsonObject: Json.ObjectValue) {
+
 }
 
 function getDefaultValueFromType(propType: ExpressionType | undefined, indent: number): string {
