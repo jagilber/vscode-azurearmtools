@@ -2,8 +2,6 @@
 // Copyright (c) Microsoft Corporation.  All rights reserved.
 // ----------------------------------------------------------------------------
 
-// tslint:disable:max-line-length
-
 import { EOL } from "os";
 import { CachedValue } from "../CachedValue";
 import * as Completion from "../Completion";
@@ -35,8 +33,8 @@ import { DeploymentParameters } from "./DeploymentParameters";
 // }
 
 /**
- * Represents a position inside the snapshot of a deployment template, plus all related information
- * that can be parsed and analyzed about it
+ * Represents a position inside the snapshot of a deployment parameter file, plus all related information
+ * that can be parsed and analyzed about it from that position.
  */
 export class ParametersPositionContext {
     private _deploymentParameters: DeploymentParameters;
@@ -234,7 +232,7 @@ export class ParametersPositionContext {
                 // tslint:disable-next-line:prefer-template
                 const text = createParameterProperty(this._deploymentTemplate, param);
                 const replacement = `,${EOL}${text}`;
-                const detail = `Insert a value for template parameter "${param.nameValue.unquotedValue}"`;
+                const detail = `Insert a value for parameter "${param.nameValue.unquotedValue}"`;
                 const description = text;
 
                 completions.push(

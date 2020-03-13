@@ -24,8 +24,9 @@ import * as Json from "./JSON";
 import * as language from "./Language";
 import { reloadSchemas } from "./languageclient/reloadSchemas";
 import { startArmLanguageServer, stopArmLanguageServer } from "./languageclient/startArmLanguageServer";
-import { considerQueryingForParameterFile, findMappedParameterFileForTemplate, findMappedTemplateFileForParameterFile, getFriendlyPathToParameterFile, openParameterFile, selectParameterFile } from "./parameterFiles";
+import { DeploymentFileMapping } from "./parameterFiles/DeploymentFileMapping";
 import { DeploymentParameters } from "./parameterFiles/DeploymentParameters";
+import { considerQueryingForParameterFile, getFriendlyPathToParameterFile, openParameterFile, selectParameterFile } from "./parameterFiles/parameterFiles";
 import { ParametersPositionContext } from "./parameterFiles/ParametersPositionContext";
 import { IReferenceSite, PositionContext } from "./PositionContext";
 import { ReferenceList } from "./ReferenceList";
@@ -71,6 +72,7 @@ export class AzureRMTools {
     private readonly _paramsStatusBarItem: vscode.StatusBarItem;
     private _areDeploymentTemplateEventsHookedUp: boolean = false;
     private _diagnosticsVersion: number = 0;
+    private readonly _mapping: DeploymentFileMapping = new DeploymentFileMapping(ext.configuration);
 
     // More information can be found about this definition at https://code.visualstudio.com/docs/extensionAPI/vscode-api#DecorationRenderOptions
     // Several of these properties are CSS properties. More information about those can be found at https://www.w3.org/wiki/CSS/Properties
@@ -130,8 +132,14 @@ export class AzureRMTools {
         registerCommand("azurerm-vscode-tools.sortTopLevel", async () => {
             await this.sortTemplate(SortType.TopLevel);
         });
-        registerCommand("azurerm-vscode-tools.selectParameterFile", selectParameterFile);
-        registerCommand("azurerm-vscode-tools.openParameterFile", openParameterFile);
+        registerCommand(
+            "azurerm-vscode-tools.selectParameterFile", async (actionContext: IActionContext, source?: vscode.Uri) => {
+                await selectParameterFile(actionContext, this._mapping, source);
+            });
+        registerCommand(
+            "azurerm-vscode-tools.openParameterFile", async (actionContext: IActionContext, source?: vscode.Uri) => {
+                await openParameterFile(this._mapping, source, undefined);
+            });
         registerCommand("azurerm-vscode-tools.resetGlobalState", resetGlobalState);
 
         this._paramsStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
@@ -249,7 +257,7 @@ export class AzureRMTools {
                             this.considerQueryingForNewerSchema(editor, deploymentTemplate);
 
                             // Is there a possibly-matching params file they might want to associate?
-                            considerQueryingForParameterFile(document);
+                            considerQueryingForParameterFile(this._mapping, document);
                         }
                     }
 
@@ -371,7 +379,7 @@ export class AzureRMTools {
                 commentCount: deploymentTemplate.getCommentCount(),
                 extErrorsCount: errors.length,
                 extWarnCount: warnings.length,
-                linkedParameterFiles: findMappedParameterFileForTemplate(document.uri) ? 1 : 0
+                linkedParameterFiles: this._mapping.getParameterFile(document.uri) ? 1 : 0
             });
 
         this.logFunctionCounts(deploymentTemplate);
@@ -583,7 +591,7 @@ export class AzureRMTools {
         if (activeDocument) {
             const deploymentTemplate = this.getDeploymentTemplate(activeDocument);
             if (deploymentTemplate) {
-                const paramFileUri = findMappedParameterFileForTemplate(activeDocument.uri);
+                const paramFileUri = this._mapping.getParameterFile(activeDocument.uri);
                 if (paramFileUri) {
                     const doesParamFileExist = await fse.pathExists(paramFileUri?.fsPath);
                     let text = `Parameters: ${getFriendlyPathToParameterFile(activeDocument.uri, paramFileUri)}`;
@@ -783,7 +791,7 @@ export class AzureRMTools {
                 actionContext.telemetry.suppressIfSuccessful = true;
                 actionContext.errorHandling.suppressDisplay = true;
 
-                const templateUri = findMappedTemplateFileForParameterFile(document.uri);
+                const templateUri = this._mapping.getTemplateFile(document.uri);
                 if (!templateUri) {
                     return;
                 }

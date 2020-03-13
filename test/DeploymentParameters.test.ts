@@ -6,40 +6,38 @@
 // tslint:disable:object-literal-key-quotes no-function-expression no-non-null-assertion align no-http-string
 
 import * as assert from "assert";
-import { DefinitionKind, DeploymentParameters, INamedDefinition, Language, ParameterValueDefinition, ReferenceList, TemplateScope } from "../extension.bundle";
-
-const IssueKind = Language.IssueKind;
+import { DeploymentParameters, ParameterValueDefinition } from "../extension.bundle";
 
 suite("DeploymentParameters", () => {
     //asdf
-    function findReferences(dt: DeploymentParameters, definitionKind: DefinitionKind, definitionName: string, scope: TemplateScope): ReferenceList {
-        // tslint:disable-next-line: no-unnecessary-initializer
-        let definition: INamedDefinition | undefined;
+    // function findReferences(dt: DeploymentParameters, definitionKind: DefinitionKind, definitionName: string, scope: TemplateScope): ReferenceList {
+    //     // tslint:disable-next-line: no-unnecessary-initializer
+    //     let definition: INamedDefinition | undefined;
 
-        // tslint:disable-next-line: switch-default
-        switch (definitionKind) {
-            case DefinitionKind.BuiltinFunction:
-                break;
-            case DefinitionKind.Namespace:
-                break;
-            case DefinitionKind.Parameter:
-                definition = scope.getParameterDefinition(definitionName);
-                break;
-            case DefinitionKind.UserFunction:
-                break;
-            case DefinitionKind.Variable:
-                definition = scope.getVariableDefinition(definitionName);
-                break;
-            default:
-                assert.fail("Test scenario NYI");
-        }
+    //     // tslint:disable-next-line: switch-default
+    //     switch (definitionKind) {
+    //         case DefinitionKind.BuiltinFunction:
+    //             break;
+    //         case DefinitionKind.Namespace:
+    //             break;
+    //         case DefinitionKind.Parameter:
+    //             definition = scope.getParameterDefinition(definitionName);
+    //             break;
+    //         case DefinitionKind.UserFunction:
+    //             break;
+    //         case DefinitionKind.Variable:
+    //             definition = scope.getVariableDefinition(definitionName);
+    //             break;
+    //         default:
+    //             assert.fail("Test scenario NYI");
+    //     }
 
-        if (!definition) {
-            return new ReferenceList(definitionKind, []);
-        }
+    //     if (!definition) {
+    //         return new ReferenceList(definitionKind, []);
+    //     }
 
-        return dt.findReferences(definition!);
-    }
+    //     return dt.findReferences(definition!);
+    // }
 
     suite("constructor(string)", () => {
         test("Empty stringValue", () => {
