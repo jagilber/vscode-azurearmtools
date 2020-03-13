@@ -13,7 +13,7 @@ export function isParameterValueDefinition(definition: INamedDefinition): defini
 }
 
 /**
- * This class represents the definition of a top-level parameter in a deployment template.
+ * This class represents the definition of a parameter value in a deployment parameter file
  */
 export class ParameterValueDefinition implements INamedDefinition {
     public readonly definitionKind: DefinitionKind = DefinitionKind.Parameter;
@@ -30,10 +30,10 @@ export class ParameterValueDefinition implements INamedDefinition {
         return this._property.span;
     }
 
-    public get defaultValue(): Json.Value | undefined {
-        const parameterDefinition: Json.ObjectValue | undefined = Json.asObjectValue(this._property.value);
-        if (parameterDefinition) {
-            return parameterDefinition.getPropertyValue("value");
+    public get value(): Json.Value | undefined {
+        const parameterValue: Json.ObjectValue | undefined = Json.asObjectValue(this._property.value);
+        if (parameterValue) {
+            return parameterValue.getPropertyValue("value");
         }
 
         return undefined;
@@ -51,6 +51,6 @@ export class ParameterValueDefinition implements INamedDefinition {
      * Convenient way of seeing what this object represents in the debugger, shouldn't be used for production code
      */
     public get __debugDisplay(): string {
-        return this.nameValue.toString();
+        return `${this.nameValue.toString()} = ${this.value?.__debugDisplay}`;
     }
 }

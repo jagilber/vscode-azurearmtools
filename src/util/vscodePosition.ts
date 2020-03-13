@@ -7,7 +7,7 @@ import * as vscode from 'vscode';
 import { DeploymentTemplate } from '../DeploymentTemplate';
 import { assert } from "../fixed_assert";
 import * as language from "../Language";
-import { DeploymentParameters } from '../parameters/DeploymentParameters';
+import { DeploymentParameters } from '../parameterFiles/DeploymentParameters';
 
 export function getVSCodeRangeFromSpan(deploymentTemplate: DeploymentTemplate, span: language.Span): vscode.Range {
     assert(span);
