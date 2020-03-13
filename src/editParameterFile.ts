@@ -5,9 +5,8 @@
 import * as fse from 'fs-extra';
 import * as os from 'os';
 import * as path from 'path';
-import { QuickPickItem, TextEditor, Uri, window } from "vscode";
+import { QuickPickItem, Uri, window } from "vscode";
 import { IActionContext, UserCancelledError } from 'vscode-azureextensionui';
-import { Json } from '../extension.bundle';
 import { CaseInsensitiveMap } from './CaseInsensitiveMap';
 import { DeploymentTemplate } from "./DeploymentTemplate";
 import { ExpressionType } from './ExpressionType';
@@ -88,7 +87,7 @@ ${tab}"parameters": {
     return contents;
 }
 
-export function createParameterProperty(template: DeploymentTemplate, parameter: IParameterDefinition, indent: number): string {
+export function createParameterProperty(template: DeploymentTemplate, parameter: IParameterDefinition, indent: number = defaultIndent): string {
     /* e.g.
 
     "parameters": {
@@ -114,14 +113,14 @@ export function createParameterProperty(template: DeploymentTemplate, parameter:
         + `}`;
 }
 
-export async function addParameterToParameterFile(editor: TextEditor, template: DeploymentTemplate, parameter: IParameterDefinition): Promise<void> {
-    const parameterText: string = createParameterProperty(template, parameter, defaultIndent);
-    appendPropertyTextIntoObject(editor, parameterText);
-}
+// export async function addParameterToParameterFile(editor: TextEditor, template: DeploymentTemplate, parameter: IParameterDefinition): Promise<void> {
+//     const parameterText: string = createParameterProperty(template, parameter, defaultIndent);
+//     appendPropertyTextIntoObject(editor, parameterText);
+// }
 
-function appendPropertyTextIntoObject(editor: TextEditor, text: string, jsonObject: Json.ObjectValue) {
+// function appendPropertyTextIntoObject(editor: TextEditor, text: string, jsonObject: Json.ObjectValue) {
 
-}
+// }
 
 function getDefaultValueFromType(propType: ExpressionType | undefined, indent: number): string {
     const comment = "// TODO: Fill in parameter value";

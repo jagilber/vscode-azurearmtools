@@ -28,7 +28,13 @@ import { UndefinedParameterAndVariableVisitor } from "./visitors/UndefinedParame
 import * as UndefinedVariablePropertyVisitor from "./visitors/UndefinedVariablePropertyVisitor";
 import * as UnrecognizedFunctionVisitor from "./visitors/UnrecognizedFunctionVisitor";
 
-export class DeploymentTemplate {
+//asdf
+// asdf move
+export class DeploymentFile {
+
+}
+
+export class DeploymentTemplate extends DeploymentFile {
     // Parse result for the template JSON document as a whole
     private _jsonParseResult: Json.ParseResult;
 
@@ -58,6 +64,7 @@ export class DeploymentTemplate {
      * @param _documentId A unique identifier for this document. Usually this will be a URI to the document.
      */
     constructor(private _documentText: string, private _documentId: string) {
+        super();
         nonNullOrEmptyValue(_documentId, "_documentId");
 
         this._jsonParseResult = Json.parse(_documentText);

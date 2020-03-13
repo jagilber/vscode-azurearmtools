@@ -507,6 +507,43 @@ export function findMappedParameterFileForTemplate(templateFileUri: Uri): Uri | 
   return undefined;
 }
 
+//asdf
+export function findMappedTemplateFileForParameterFile(parameterFileUri: Uri): Uri | undefined {
+  const paramFiles: { [key: string]: string } | undefined =
+    workspace.getConfiguration(configPrefix).get<{ [key: string]: string }>(configKeys.parameterFiles)
+    // tslint:disable-next-line: strict-boolean-expressions
+    || {};
+  if (typeof paramFiles === 'object') {
+    const normalizedTargetParamPath = normalizePath(parameterFileUri.fsPath);
+    let templateFile: Uri | undefined;
+
+    // Can't do a simple lookup because need to be case-insensitivity tolerant on Win32
+    for (let fileNameKey of Object.getOwnPropertyNames(paramFiles)) {
+      const paramFileName = paramFiles[fileNameKey]; // asdf can this be undefined?
+      if (typeof paramFileName !== "string") {
+        continue;
+      }
+
+      // Resolve relative to template file's folder
+      let resolvedPath = path.resolve(path.dirname(parameterFileUri.fsPath), paramFileName);
+      const normalizedParamPath: string = normalizePath(resolvedPath);
+
+      // If the user has an entry in both workspace and user settings, vscode combines the two objects,
+      //   with workspace settings overriding the user settings.
+      // If there are two entries differing only by case, allow the last one to win, because it will be
+      //   the workspace setting value
+
+      if (normalizedParamPath === normalizedTargetParamPath) {
+        templateFile = !!fileNameKey ? Uri.file(fileNameKey) : undefined;
+      }
+    }
+
+    return templateFile;
+  }
+
+  return undefined;
+}
+
 async function setMappedParameterFileForTemplate(templateUri: Uri, paramFileUri: Uri | undefined): Promise<void> {
   const relativeParamFilePath: string | undefined = paramFileUri ? getFriendlyPathToParameterFile(templateUri, paramFileUri) : undefined;
   const normalizedTemplatePath = normalizePath(templateUri.fsPath);
