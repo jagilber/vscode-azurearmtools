@@ -44,7 +44,7 @@ export function testWithPrep(expectation: string, preparations: ITestPreparation
                 }
 
                 // Perform the test
-                return callback.call(this);
+                return await callback.call(this);
             }
             finally {
                 // Perform post-test preparations
