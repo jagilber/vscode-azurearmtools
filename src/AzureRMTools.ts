@@ -26,7 +26,7 @@ import { reloadSchemas } from "./languageclient/reloadSchemas";
 import { startArmLanguageServer, stopArmLanguageServer } from "./languageclient/startArmLanguageServer";
 import { DeploymentFileMapping } from "./parameterFiles/DeploymentFileMapping";
 import { DeploymentParameters } from "./parameterFiles/DeploymentParameters";
-import { considerQueryingForParameterFile, getFriendlyPathToParameterFile, openParameterFile, selectParameterFile } from "./parameterFiles/parameterFiles";
+import { considerQueryingForParameterFile, getFriendlyPathToFile, openParameterFile, selectParameterFile } from "./parameterFiles/parameterFiles";
 import { ParametersPositionContext } from "./parameterFiles/ParametersPositionContext";
 import { IReferenceSite, PositionContext } from "./PositionContext";
 import { ReferenceList } from "./ReferenceList";
@@ -594,7 +594,7 @@ export class AzureRMTools {
                 const paramFileUri = this._mapping.getParameterFile(activeDocument.uri);
                 if (paramFileUri) {
                     const doesParamFileExist = await fse.pathExists(paramFileUri?.fsPath);
-                    let text = `Parameters: ${getFriendlyPathToParameterFile(activeDocument.uri, paramFileUri)}`;
+                    let text = `Parameters: ${getFriendlyPathToFile(paramFileUri)}`;
                     if (!doesParamFileExist) {
                         text += " $(error) Not found";
                     }

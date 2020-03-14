@@ -2,12 +2,11 @@
 // Copyright (c) Microsoft Corporation.  All rights reserved.
 // ----------------------------------------------------------------------------
 
-import * as path from 'path';
 import { ConfigurationTarget, Uri } from 'vscode';
 import { IConfiguration } from '../Configuration';
 import { configKeys } from '../constants';
 import { normalizePath } from '../util/normalizePath';
-import { getFriendlyPathToParameterFile } from './parameterFiles';
+import { getRelativeParameterFilePath, resolveParameterFilePath } from './parameterFiles';
 
 export class DeploymentFileMapping {
     public constructor(private configuration: IConfiguration) { }
@@ -25,12 +24,12 @@ export class DeploymentFileMapping {
             let paramFile: Uri | undefined;
 
             // Can't do a simple lookup because need to be case-insensitivity tolerant on Win32
-            for (let fileNameKey of Object.getOwnPropertyNames(paramFiles)) {
-                const normalizedFileName: string | undefined = normalizePath(fileNameKey);
+            for (let templatePathKey of Object.getOwnPropertyNames(paramFiles)) {
+                const normalizedFileName: string | undefined = normalizePath(templatePathKey);
                 if (normalizedFileName === normalizedTemplatePath) {
-                    if (typeof paramFiles[fileNameKey] === 'string') {
+                    if (typeof paramFiles[templatePathKey] === 'string') {
                         // Resolve relative to template file's folder
-                        let resolvedPath = path.resolve(path.dirname(templateFileUri.fsPath), paramFiles[fileNameKey]);
+                        let resolvedPath = resolveParameterFilePath(templateFileUri.fsPath, paramFiles[templatePathKey]);
 
                         // If the user has an entry in both workspace and user settings, vscode combines the two objects,
                         //   with workspace settings overriding the user settings.
@@ -58,14 +57,14 @@ export class DeploymentFileMapping {
             let templateFile: Uri | undefined;
 
             // Can't do a simple lookup because need to be case-insensitivity tolerant on Win32
-            for (let fileNameKey of Object.getOwnPropertyNames(paramFiles)) {
-                const paramFileName = paramFiles[fileNameKey]; // asdf can this be undefined?
-                if (typeof paramFileName !== "string") {
+            for (let templatePathKey of Object.getOwnPropertyNames(paramFiles)) {
+                const paramFileRelativePath = paramFiles[templatePathKey]; // asdf can this be undefined?
+                if (typeof paramFileRelativePath !== "string") {
                     continue;
                 }
 
                 // Resolve relative to template file's folder
-                let resolvedPath = path.resolve(path.dirname(parameterFileUri.fsPath), paramFileName);
+                let resolvedPath = resolveParameterFilePath(templatePathKey, paramFileRelativePath);
                 const normalizedParamPath: string = normalizePath(resolvedPath);
 
                 // If the user has an entry in both workspace and user settings, vscode combines the two objects,
@@ -74,7 +73,7 @@ export class DeploymentFileMapping {
                 //   the workspace setting value
 
                 if (normalizedParamPath === normalizedTargetParamPath) {
-                    templateFile = !!fileNameKey ? Uri.file(fileNameKey) : undefined;
+                    templateFile = !!templatePathKey ? Uri.file(templatePathKey) : undefined;
                 }
             }
 
@@ -88,31 +87,31 @@ export class DeploymentFileMapping {
      * Sets a mapping from a template file to a parameter file
      */
     public async mapParameterFile(templateUri: Uri, paramFileUri: Uri | undefined): Promise<void> {
-        const relativeParamFilePath: string | undefined = paramFileUri ? getFriendlyPathToParameterFile(templateUri, paramFileUri) : undefined;
+        const relativeParamFilePath: string | undefined = paramFileUri ? getRelativeParameterFilePath(templateUri, paramFileUri) : undefined;
         const normalizedTemplatePath = normalizePath(templateUri.fsPath);
 
         // We only want the values in the user settings
-        const map = this.configuration
+        let map = this.configuration
             .inspect<{ [key: string]: string | undefined }>(configKeys.parameterFiles)?.globalValue
             // tslint:disable-next-line: strict-boolean-expressions
             || {};
 
         if (typeof map !== 'object') {
-            return;
+            map = {};
         }
 
-        // Copy existing entries that don't match (might be multiple entries with different casing, so can't do simple delete)
+        // Copy existing entries that don't match (might be multiple entries with different casing, so can't do simple delete) //asdftestpoint
         const newMap: { [key: string]: string | undefined } = {};
 
-        for (let templatePath of Object.getOwnPropertyNames(map)) {
-            if (normalizePath(templatePath) !== normalizedTemplatePath) {
-                newMap[templatePath] = map[templatePath];
+        for (let templatePath of Object.getOwnPropertyNames(map)) {//asdftestpoint
+            if (normalizePath(templatePath) !== normalizedTemplatePath) {//asdftestpoint
+                newMap[templatePath] = map[templatePath]; //asdftestpoint
             }
         }
 
         // Add new entry
         if (paramFileUri) {
-            newMap[templateUri.fsPath] = relativeParamFilePath;
+            newMap[normalizedTemplatePath] = relativeParamFilePath;
         }
 
         await this.configuration.update(configKeys.parameterFiles, newMap, ConfigurationTarget.Global);

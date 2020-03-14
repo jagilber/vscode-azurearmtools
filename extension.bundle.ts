@@ -33,7 +33,7 @@ export { CachedValue } from "./src/CachedValue";
 export { CaseInsensitiveMap } from "./src/CaseInsensitiveMap";
 export * from "./src/Completion";
 export { IConfiguration } from "./src/Configuration";
-export { armTemplateLanguageId as armDeploymentLanguageId, armTemplateLanguageId as languageId, configKeys, configPrefix, diagnosticsCompletePrefix, expressionsDiagnosticsSource, languageServerStateSource, templateKeys } from "./src/constants";
+export { armTemplateLanguageId as armDeploymentLanguageId, armTemplateLanguageId as languageId, configKeys, configPrefix, diagnosticsCompletePrefix, expressionsDiagnosticsSource, isWin32, languageServerStateSource, templateKeys } from "./src/constants";
 export { __debugMarkPositionInString, __debugMarkSubstring } from "./src/debugMarkStrings";
 export { DeploymentTemplate } from "./src/DeploymentTemplate";
 export { Duration } from './src/Duration';
